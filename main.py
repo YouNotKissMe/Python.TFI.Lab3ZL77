@@ -1,59 +1,61 @@
 import os
+from tabulate import tabulate
 
 
-class Lz77:
-    def __init__(self, path, creat=None):
-        self.path = path
-        self.text = open(path, 'r').read()
-        if creat != None:
-            self.revtext = open(creat, 'w')
-        self.textcoda = open('testing/file2.txt', 'w')
-        self.textcoda2 = open('testing/file3.txt', 'w')
-        self.lampa = []  # массив с букавами
-        self.chisla = []  # массив с индаксами букав
-        self.flag = -1
-        self.a = ''
-
-    def print(self):
-        return print(self.text)
+class lz77:
+    def __init__(self, path):
+        self.q = path
+        self.path = open(path, 'r', encoding='utf-16').read()
+        self.massivBukav = []
+        for i in self.path:
+            if i not in self.massivBukav:
+                self.massivBukav.append(i)
+        self.a = None
+        self.potok = []
+        self.tabuletions = [['размер исходного файла', 'размер после сжатия', 'len(исходного файла)',
+                             'len(сжатого)', 'кф.сжатия']]
 
     def algoritm(self):
-        for i in range(len(self.text)): # не видит цепочки повторений больше 2, исправить
-            if self.flag != -1:
-                self.lampa.append(self.text[i])
-                self.chisla.append(self.flag+1)
-                self.flag = None
-            else:
-                if self.text[i] in self.lampa:
-                    self.flag = self.lampa.index(self.text[i])
+        for i in self.path:
+            if self.a:
+                if self.a in self.massivBukav:
+                    self.a += i
                 else:
-                    self.lampa.append(self.text[i])
-                    self.chisla.append(0)
-        for i in range(len(self.lampa)):
-            self.a += f'{self.chisla[i]}{self.lampa[i]}'
-        self.textcoda.write(self.a)
-        self.textcoda.close()
-        self.a = ''
-
-    def reverseAlgorithm(self):
-        for i in range(len(self.chisla)):
-            if self.chisla[i] != 0:
-                self.a += self.lampa[self.chisla[i]-1]
-                self.a += self.lampa[i]
+                    self.massivBukav.append(self.a)
+                    self.potok.append(self.massivBukav.index(self.a[:-1]))
+                    self.a = self.a[-1] + i
             else:
-                self.a += self.lampa[i]
-        self.textcoda2.write(self.a)
-        self.textcoda2.close()
-        self.a = ''
+                self.a = i
+        if len(self.path) > 1:
+            if self.a in self.massivBukav:
+                self.potok.append(self.massivBukav.index(self.a))
+            else:
+                self.massivBukav.append(self.a)
+                self.potok.append(self.massivBukav.index(self.a))
+        self.a = None
 
-a = 'testing/file1.txt'
-abc = Lz77(a)
-abc.algoritm()
-abc.reverseAlgorithm()
-# b = 'testing/file2.txt'
-size1 = os.stat(a).st_size
-print(f'исходный размер файла {size1} байт\n')
-size2 = os.stat('testing/file2.txt').st_size
-print(f'получившийся после RLE размер файла {size2}')
-# qqq = size1 / size2
-# print(f'кф сжатия {qqq}')
+    def reverseee(self):
+        self.a = ''
+        for i in self.potok:
+            self.a += self.massivBukav[i]
+        antiRLEtext = open('testing/file3.txt', 'w',encoding='utf-16')
+        antiRLEtext.write(self.a)
+        self.a = ''
+        for i in self.potok:
+            self.a += str(chr(i))
+        RLEtext = open('testing/file2.txt', 'w',encoding='utf-16')
+        RLEtext.write(self.a)
+        size1, size2 = os.stat(self.q).st_size, os.stat('testing/file2.txt').st_size
+        qqq = size1 / size2
+        self.tabuletions.append([f'{size1} байт', f'{size2} байт', len(self.path),
+                                 len(self.massivBukav), qqq])
+        return print(tabulate(self.tabuletions, tablefmt='pipe', stralign='center',
+                              headers='firstrow'))
+
+
+if __name__ == '__main__':
+    a = 'testing/file1.txt'
+    q = lz77(a)
+    q.algoritm()
+    q.reverseee()
+
